@@ -21,6 +21,35 @@ npm run smoke   # boots a throwaway server and checks every endpoint
 | `VR_DURATIONS` | `data/durations.tsv` | 418-row `file<TAB>seconds` table |
 | `VR_LYRICS` | `data/lyrics.json` | offline lyric dump result |
 | `VR_STATE` | `data/state.json` | shared settings/achievements store |
+| `VR_YTDLP` | `tools/yt-dlp.exe` (or PATH) | yt-dlp binary used by the link resolver |
+| `VR_JS_RUNTIME` | `node` | JS runtime yt-dlp needs to expose YouTube's progressive formats |
+| `VR_RESOLVE_TTL` | `20` | minutes to cache a resolved stream URL (signed links expire in hours) |
+| `VR_YTDLP_ARGS` | empty | extra args appended to every resolve call, e.g. `--cookies-from-browser chrome` |
+| `VR_RESOLVE_TIMEOUT` | `45` | seconds before a resolve attempt is abandoned |
+
+## youtube link playback
+
+`GET /api/v1/resolve?url=<youtube url>` returns metadata plus one direct
+progressive mp4 stream URL (format 18 - video and audio combined, so the
+player's `<audio>` and muted `<video>` can share it). nothing is downloaded or
+added to the shelf. `GET /api/v1/resolve/status` reports whether the binary is
+available. only youtube URLs are accepted; everything else gets a 400.
+
+the binary is gitignored (24 MB), so install it once:
+
+```powershell
+curl.exe -L --fail -o tools\yt-dlp.exe https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe
+```
+
+youtube hides progressive formats unless yt-dlp has a JS runtime. node is
+already required by this server, so `--js-runtimes node` is passed by default.
+if a link needs cookies (age/region gates), set `VR_YTDLP_ARGS` to
+`--cookies-from-browser chrome` and restart.
+
+signed stream URLs are bound to the requesting IP and expire in hours, so the
+player re-resolves every time rather than storing them. a 403/429 usually means
+the IP got soft-blocked - solve the challenge in a browser and retry with
+cookies. resolved metadata is cached for `VR_RESOLVE_TTL` minutes.
 
 ## browser console
 

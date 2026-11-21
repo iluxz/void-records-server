@@ -57,6 +57,14 @@ async function json(pathname, options) {
   const again = await json('/api/v1/random?tag=ultrakill&n=3&seed=42');
   check('random seeded deterministic', JSON.stringify(random.body.picked) === JSON.stringify(again.body.picked));
 
+  const resolveStatus = await json('/api/v1/resolve/status');
+  check('resolver status', resolveStatus.status === 200 && typeof resolveStatus.body.available === 'boolean',
+    'binary=' + resolveStatus.body.binary);
+  const reject = await json('/api/v1/resolve?url=' + encodeURIComponent('https://example.com/song'));
+  check('resolver rejects non-youtube', reject.status === 400 && /youtube/i.test(reject.body.error));
+  const noUrl = await json('/api/v1/resolve');
+  check('resolver needs a url', noUrl.status === 400);
+
   const lyrics = await json('/api/v1/lyrics?file=delta2lp.wav&duration=10.45');
   check('lyrics offline empty is graceful', lyrics.status === 200 && lyrics.body.found === false);
 

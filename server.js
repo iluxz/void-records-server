@@ -6,6 +6,7 @@ const fs = require('fs');
 const { load } = require('./lib/catalog');
 const { Lyrics } = require('./lib/lyrics');
 const { Store } = require('./lib/store');
+const resolver = require('./lib/resolve');
 
 const ROOT = __dirname;
 const MEDIA_DIR = path.resolve(process.env.VR_MEDIA_DIR || path.join(ROOT, '..', 'void-records'));
@@ -127,6 +128,29 @@ app.get('/api/v1/random', (req, res) => {
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
   res.json({ count: pool.length, picked: pool.slice(0, n).map(publicTrack) });
+});
+
+// Paste-a-link playback. Metadata + one direct stream URL only; nothing is
+// saved to the shelf and nothing here can affect clean-listen progress.
+app.get('/api/v1/resolve/status', async (req, res) => {
+  const version = await resolver.available();
+  res.json({ available: !!version, version: version || null, binary: resolver.BIN });
+});
+
+app.get('/api/v1/resolve', async (req, res) => {
+  const url = String(req.query.url || '');
+  if (!url) return res.status(400).json({ error: 'missing url parameter' });
+  if (!resolver.valid(url)) return res.status(400).json({ error: 'only youtube links are supported here' });
+  try {
+    const info = await resolver.resolveUrl(url);
+    res.set('Cache-Control', 'no-store');
+    res.json(info);
+  } catch (err) {
+    res.status(err.code === 400 ? 400 : 502).json({
+      error: err.message,
+      hint: 'check tools/yt-dlp.exe (or VR_YTDLP) and network access'
+    });
+  }
 });
 
 app.get('/api/v1/lyrics/index', (req, res) => res.json({ count: lyrics.size, loadedAt: lyrics.loadedAt, entries: lyrics.index() }));
