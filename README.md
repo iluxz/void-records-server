@@ -22,10 +22,45 @@ npm run smoke   # boots a throwaway server and checks every endpoint
 | `VR_LYRICS` | `data/lyrics.json` | offline lyric dump result |
 | `VR_STATE` | `data/state.json` | shared settings/achievements store |
 
+## browser console
+
+served by express at `/` and `/console`, and deployed to cloudflare pages at
+`https://void-records-console.cnnecare.workers.dev`. it has a method/path/body
+request box, a response viewer, quick chips for every common route, a filtered
+random picker and an audio player. no build step, one self-contained `console.html`.
+
+the express copy defaults to `http://127.0.0.1:8787`. the pages copy reads
+`pages/config.json` for the tunnel url, and `?base=https://...` always wins and
+sticks in localStorage. a changed tunnel url bumps the config `version`, so
+existing browsers pick it up on next load.
+
+| console script | what |
+|---|---|
+| `npm run console:url` | pull the newest trycloudflare url from `data/tunnel.log` into `pages/config.json` |
+| `npm run console:deploy` | same, then upload to cloudflare pages |
+
+`vr-server.vbs` starts both the server and a quick tunnel at login, hidden, with
+guards against double-launching either. copy it into the startup folder:
+
+```powershell
+Copy-Item vr-server.vbs ([Environment]::GetFolderPath('Startup'))
+```
+
+`tools/cloudflared.exe` is downloaded separately and gitignored (55 MB):
+
+```powershell
+curl.exe -L --fail -o tools\cloudflared.exe https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe
+```
+
+quick tunnel urls change on every restart. after a reboot, run
+`npm run console:deploy` once to republish the new url. for a permanent url,
+use a named tunnel with a domain instead.
+
 ## endpoints (v1)
 
 | route | what |
 |---|---|
+| `GET /` / `GET /console` | the browser console |
 | `GET /health` | status, track count, lyric count, uptime |
 | `GET /api/v1/manifest` | all 418 tracks with name, tags, duration, mime, url |
 | `GET /api/v1/tracks/:file` | one track |

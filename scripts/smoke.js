@@ -37,6 +37,11 @@ async function json(pathname, options) {
   const health = await json('/health');
   check('health', health.body.ok && health.body.tracks === 418, 'tracks=' + health.body.tracks);
 
+  const consolePage = await fetch(BASE + '/console');
+  const consoleHtml = await consolePage.text();
+  check('console served', consolePage.status === 200 && /void-records :: console/.test(consoleHtml));
+  check('console has request/response ui', consoleHtml.includes('id="send"') && consoleHtml.includes('id="out"') && consoleHtml.includes('id="player"'));
+
   const manifest = await json('/api/v1/manifest');
   check('manifest 418 tracks', manifest.body.count === 418, 'count=' + manifest.body.count);
   check('durations merged', manifest.body.timedCount === 418, 'timed=' + manifest.body.timedCount);

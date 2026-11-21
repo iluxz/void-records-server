@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>void-records :: console</title>
+<style>
+  :root{--bg:#07060c;--panel:#0d0b18;--edge:#2a2144;--line:#3b2f5e;--txt:#d7cffb;--dim:#8579ad;--purple:#8b5cf6;--cyan:#45e0d0;--amber:#ffc86b;--red:#ff6b8b;--green:#7bf1a8}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;min-height:100vh;padding:18px;background-image:radial-gradient(circle at 15% 0%,rgba(139,92,246,.09),transparent 45%),radial-gradient(circle at 90% 100%,rgba(69,224,208,.06),transparent 40%)}
+  .wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+  header{display:flex;align-items:baseline;justify-content:space-between;gap:10px;border-bottom:1px solid var(--edge);padding-bottom:10px}
+  h1{font-size:15px;letter-spacing:2px;margin:0;text-transform:uppercase;color:#fff}
+  h1 small{color:var(--dim);font-size:11px;letter-spacing:1px}
+  .status{font-size:11px;color:var(--dim)}
+  .status b{color:var(--amber)}
+  .status.ok b{color:var(--green)} .status.bad b{color:var(--red)}
+  .card{background:rgba(13,11,24,.85);border:1px solid var(--edge);border-radius:6px;padding:12px}
+  .card h2{font-size:10px;letter-spacing:2px;color:var(--dim);margin:0 0 10px;text-transform:uppercase;font-weight:500}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  label{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+  input,select,textarea,button{font:inherit;color:var(--txt)}
+  input,select,textarea{background:#0a0813;border:1px solid var(--line);border-radius:4px;padding:6px 8px;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--purple)}
+  input[type=text]{min-width:0}
+  #base{flex:1 1 340px} #client{width:150px}
+  button{background:#1a1430;border:1px solid var(--line);border-radius:4px;padding:6px 10px;cursor:pointer;transition:.12s}
+  button:hover{border-color:var(--purple);background:#241a42}
+  button:active{transform:translateY(1px)}
+  button.go{background:var(--purple);border-color:var(--purple);color:#fff;font-weight:bold;padding:6px 18px}
+  button.go:hover{background:#9d6dff}
+  button.chip{font-size:11px;padding:5px 9px;color:var(--cyan)}
+  button.chip.on{border-color:var(--cyan);background:#102b2a}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+  #method{width:92px} #path{flex:1 1 320px}
+  textarea{width:100%;height:88px;resize:vertical;margin-top:8px;font-size:12px;line-height:1.45}
+  .sendrow{display:flex;justify-content:flex-end;margin-top:8px}
+  .resphead{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+  .pill{font-size:11px;padding:2px 8px;border-radius:3px;border:1px solid var(--line)}
+  .pill.good{color:var(--green);border-color:#255c3c} .pill.bad{color:var(--red);border-color:#6b263a}
+  .meta{font-size:10px;color:var(--dim)}
+  pre#out{margin:0;background:#08060f;border:1px solid var(--edge);border-radius:4px;padding:10px;max-height:340px;overflow:auto;white-space:pre-wrap;word-break:break-word;font-size:11.5px;color:#c9bff0}
+  .tracks{display:flex;flex-direction:column;gap:3px;margin-top:8px;max-height:190px;overflow:auto}
+  .track{display:grid;grid-template-columns:26px 1fr auto;gap:8px;align-items:center;padding:4px 6px;border:1px solid transparent;border-radius:3px;cursor:pointer;font-size:11px}
+  .track:hover{border-color:var(--line);background:#17112b}
+  .track .n{color:var(--dim)} .track .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .track .d{color:var(--amber);font-size:10px}
+  audio{width:100%;height:34px;margin-top:10px;filter:invert(.9) hue-rotate(180deg)}
+  .now{font-size:11px;color:var(--cyan);margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hint{font-size:10px;color:var(--dim);margin-top:6px}
+  a{color:var(--cyan)}
+  @media(max-width:640px){body{padding:10px}#client{width:100%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>void-records <small>:: console</small></h1>
+    <div id="status" class="status">checking <b>…</b></div>
+  </header>
+
+  <div class="card">
+    <h2>connection</h2>
+    <div class="row">
+      <label for="base">server</label>
+      <input id="base" type="text" spellcheck="false" placeholder="http://127.0.0.1:8787">
+      <button id="saveBase" title="save and retest">save</button>
+      <label for="client">client</label>
+      <input id="client" type="text" spellcheck="false" value="void-records">
+    </div>
+    <div class="hint">point this at the express server. from an https page you need a cloudflare tunnel url, not 127.0.0.1.</div>
+  </div>
+
+  <div class="card">
+    <h2>quick actions</h2>
+    <div class="chips">
+      <button class="chip" data-fill="GET|/health|">health</button>
+      <button class="chip" data-fill="GET|/api/v1/manifest|">manifest</button>
+      <button class="chip" data-fill="GET|/api/v1/random?n=3|">random 3</button>
+      <button class="chip" data-fill="GET|/api/v1/lyrics?track=drone2lp.wav|">lyrics</button>
+      <button class="chip" data-fill="GET|/api/v1/lyrics/index|">lyrics index</button>
+      <button class="chip" data-fill="GET|/api/v1/state/void-records|">get state</button>
+      <button class="chip" data-fill="PATCH|/api/v1/state/void-records|{&quot;note&quot;:&quot;hello from the console&quot;}">patch state</button>
+      <button class="chip" data-fill="POST|/api/v1/lyrics/reload|{}">reload lyrics</button>
+    </div>
+    <div class="row">
+      <label for="tag">tag</label><input id="tag" type="text" placeholder="ultrakill" style="width:130px">
+      <label for="num">n</label><input id="num" type="text" value="3" style="width:50px">
+      <button id="pickBtn">filtered pick</button>
+      <button id="playPick">play picks</button>
+    </div>
+    <div id="tracks" class="tracks"></div>
+  </div>
+
+  <div class="card">
+    <h2>request</h2>
+    <div class="row">
+      <select id="method">
+        <option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option>
+      </select>
+      <input id="path" type="text" spellcheck="false" value="/api/v1/manifest">
+      <button id="send" class="go">send</button>
+    </div>
+    <textarea id="body" spellcheck="false" placeholder="json body (POST / PUT / PATCH)">{}</textarea>
+  </div>
+
+  <div class="card">
+    <h2>response</h2>
+    <div class="resphead">
+      <span id="code" class="pill">—</span>
+      <span id="timing" class="meta"></span>
+      <span id="size" class="meta"></span>
+      <a id="openUrl" href="#" target="_blank" rel="noopener" style="margin-left:auto;font-size:10px">open url ↗</a>
+    </div>
+    <pre id="out">ready.</pre>
+  </div>
+
+  <div class="card">
+    <h2>audio</h2>
+    <div class="row">
+      <input id="audioPath" type="text" spellcheck="false" placeholder="/audio/drone2lp.wav">
+      <button id="playUrl">play</button>
+      <button id="playRandom">play random</button>
+    </div>
+    <audio id="player" crossorigin="anonymous" controls></audio>
+    <div id="now" class="now">nothing loaded</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var $=function(id){return document.getElementById(id)};
+  var base=$('base'),client=$('client'),method=$('method'),path=$('path'),body=$('body'),out=$('out');
+  var player=$('player'),picks=[];
+
+  var params=new URLSearchParams(location.search);
+  var queryBase=params.get('base');
+  client.value=localStorage.getItem('vr_console_client')||'void-records';
+  client.addEventListener('change',function(){localStorage.setItem('vr_console_client',client.value.trim()||'void-records');refresh()});
+
+  // cloudflare pages copy reads config.json so a changed tunnel url can be
+  // pushed without touching the html. ?base= always wins and sticks locally.
+  async function initBase(){
+    var cfg=null;
+    try{
+      var r=await fetch('config.json',{cache:'no-store'});
+      if(r.ok)cfg=await r.json();
+    }catch(e){}
+    var stored=localStorage.getItem('vr_console_base')||'';
+    var storedVer=localStorage.getItem('vr_console_cfgver')||'';
+    var chosen;
+    if(queryBase)chosen=queryBase;
+    else if(cfg&&cfg.base&&cfg.version&&cfg.version!==storedVer){
+      chosen=cfg.base;
+      localStorage.setItem('vr_console_cfgver',cfg.version);
+    }
+    else chosen=stored||(cfg&&cfg.base)||'http://127.0.0.1:8787';
+    base.value=chosen;
+    if(queryBase)localStorage.setItem('vr_console_base',chosen);
+    refresh();
+  }
+
+  function root(){return base.value.trim().replace(/\/+$/,'')}
+  function setStatus(cls,txt){var s=$('status');s.className='status '+cls;s.innerHTML='<b>'+txt+'</b>'}
+  function show(code,timing,size,text){
+    $('code').textContent=code;
+    $('code').className='pill '+(code>=200&&code<300?'good':'bad');
+    $('timing').textContent=timing+'ms';
+    $('size').textContent=size;
+    out.textContent=text;
+  }
+  function parse(text){
+    try{return JSON.stringify(JSON.parse(text),null,2)}catch(e){return text}
+  }
+  async function request(m,p,b){
+    var url=root()+p, t0=performance.now();
+    var opt={method:m,headers:{}};
+    if(b!=null&&m!=='GET'){opt.headers['Content-Type']='application/json';opt.body=b}
+    var r=await fetch(url,opt), text=await r.text(), ms=Math.round(performance.now()-t0);
+    show(r.status+' '+r.statusText,ms,text.length+' chars',parse(text));
+    return {r:r,text:text};
+  }
+  async function refresh(){
+    setStatus('','checking…');
+    try{
+      var r=await fetch(root()+'/health',{cache:'no-store'}), j=await r.json();
+      if(!r.ok||!j.ok)throw 0;
+      setStatus('ok','linked  tracks <b>'+j.tracks+'</b>  lyrics <b>'+j.lyrics+'</b>');
+    }catch(e){setStatus('bad','no link')}
+  }
+  $('saveBase').addEventListener('click',function(){
+    localStorage.setItem('vr_console_base',root());refresh();
+  });
+  base.addEventListener('keydown',function(e){if(e.key==='Enter')$('saveBase').click()});
+
+  document.querySelectorAll('[data-fill]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var parts=btn.getAttribute('data-fill').split('|');
+      method.value=parts[0];path.value=parts[1];body.value=parts[2]||'';
+      send();
+    });
+  });
+  function send(){
+    var b=body.value.trim();
+    if(b&&(method.value!=='GET')){
+      try{JSON.parse(b)}catch(e){show('ERR',0,0,'body is not valid json:\n'+e.message);return}
+    }
+    $('openUrl').href=root()+path.value;
+    request(method.value,path.value,b||null).catch(function(e){show('FAIL',0,0,String(e))});
+  }
+  $('send').addEventListener('click',send);
+  path.addEventListener('keydown',function(e){if(e.key==='Enter')send()});
+
+  function fmt(s){if(s==null)return '—';s=Math.round(s);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+  function renderPicks(list){
+    picks=list;var box=$('tracks');box.innerHTML='';
+    if(!list.length){box.textContent='no picks';return}
+    list.forEach(function(t,i){
+      var d=document.createElement('div');d.className='track';
+      d.innerHTML='<span class="n">'+(i+1)+'</span><span class="nm">'+escapeHtml(t.name)+'</span><span class="d">'+fmt(t.duration)+'</span>';
+      d.title=t.file;
+      d.addEventListener('click',function(){playFile(t.file)});
+      box.appendChild(d);
+    });
+  }
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+
+  $('pickBtn').addEventListener('click',async function(){
+    var q='/api/v1/random?n='+encodeURIComponent($('num').value||'3');
+    if($('tag').value.trim())q+='&tag='+encodeURIComponent($('tag').value.trim());
+    try{
+      var j=await (await fetch(root()+q)).json();
+      renderPicks(j.picked||[]);
+      show('OK',0,(j.picked||[]).length+' picks',JSON.stringify(j,null,2));
+    }catch(e){show('FAIL',0,0,String(e))}
+  });
+  $('playPick').addEventListener('click',function(){if(picks.length)playFile(picks[0].file)});
+
+  function playFile(file){
+    var url=root()+'/audio/'+encodeURIComponent(file);
+    player.src=url;
+    $('audioPath').value='/audio/'+file;
+    $('now').textContent='loading: '+file;
+    player.play().catch(function(){});
+  }
+  $('playUrl').addEventListener('click',function(){
+    var p=$('audioPath').value.trim();if(!p)return;
+    if(!p.startsWith('/'))p='/audio/'+p;
+    player.src=root()+p;$('now').textContent='loading: '+p;player.play().catch(function(){});
+  });
+  $('playRandom').addEventListener('click',async function(){
+    try{
+      var j=await (await fetch(root()+'/api/v1/random?n=1')).json();
+      if(j.picked&&j.picked[0])playFile(j.picked[0].file);
+    }catch(e){$('now').textContent='no link'}
+  });
+  player.addEventListener('playing',function(){$('now').textContent='playing: '+($('audioPath').value||player.src)});
+  player.addEventListener('error',function(){$('now').textContent='audio error - check the url / tunnel'});
+
+  initBase();
+  setInterval(refresh,30000);
+})();
+</script>
+</body>
+</html>

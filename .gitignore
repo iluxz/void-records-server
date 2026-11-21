@@ -1,6 +1,14 @@
 node_modules/
+tools/
 data/state.json
 data/state.json.tmp
 *.log
 data/server-startup.log
 .DS_Store
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example

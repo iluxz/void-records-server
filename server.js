@@ -47,6 +47,16 @@ app.get('/vr-client.js', (req, res) => {
   res.sendFile(path.join(ROOT, 'public', 'vr-client.js'));
 });
 
+// The browser console. Same file is deployed to Cloudflare Pages; the only
+// difference there is the base-URL field (set via ?base= or saved locally).
+function serveConsole(req, res) {
+  res.set('Cache-Control', 'no-cache');
+  res.type('html');
+  res.sendFile(path.join(ROOT, 'console.html'));
+}
+app.get('/', serveConsole);
+app.get('/console', serveConsole);
+
 function publicTrack(t) {
   return { index: t.index, file: t.file, name: t.name, tags: t.tags, duration: t.duration, ext: t.ext, mime: t.mime, url: t.url };
 }
