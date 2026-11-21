@@ -5,6 +5,7 @@
 
 const { spawn } = require('child_process');
 const path = require('path');
+const sources = require('../lib/sources');
 
 const PORT = 8799;
 const BASE = 'http://127.0.0.1:' + PORT;
@@ -64,6 +65,13 @@ async function json(pathname, options) {
   check('resolver rejects non-youtube', reject.status === 400 && /youtube/i.test(reject.body.error));
   const noUrl = await json('/api/v1/resolve');
   check('resolver needs a url', noUrl.status === 400);
+
+  const discNoUrl = await json('/api/v1/discover');
+  check('discovery needs a url', discNoUrl.status === 400);
+  const discSpotify = await json('/api/v1/discover?url=' + encodeURIComponent('https://open.spotify.com/playlist/abc'));
+  check('discovery rejects spotify clearly', discSpotify.status === 400 && /no direct stream extractor/i.test(discSpotify.body.error));
+  const discSearch = sources.classify('ytsearch5:void ambient');
+  check('discovery accepts search queries', discSearch.ok && discSearch.kind === 'search');
 
   const lyrics = await json('/api/v1/lyrics?file=delta2lp.wav&duration=10.45');
   check('lyrics offline empty is graceful', lyrics.status === 200 && lyrics.body.found === false);

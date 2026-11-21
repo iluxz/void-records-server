@@ -7,6 +7,8 @@ const { load } = require('./lib/catalog');
 const { Lyrics } = require('./lib/lyrics');
 const { Store } = require('./lib/store');
 const resolver = require('./lib/resolve');
+const discovery = require('./lib/discover');
+const sources = require('./lib/sources');
 
 const ROOT = __dirname;
 const MEDIA_DIR = path.resolve(process.env.VR_MEDIA_DIR || path.join(ROOT, '..', 'void-records'));
@@ -140,9 +142,27 @@ app.get('/api/v1/resolve/status', async (req, res) => {
 app.get('/api/v1/resolve', async (req, res) => {
   const url = String(req.query.url || '');
   if (!url) return res.status(400).json({ error: 'missing url parameter' });
-  if (!resolver.valid(url)) return res.status(400).json({ error: 'only youtube links are supported here' });
+  const kind = sources.classify(url);
+  if (!resolver.valid(url)) return res.status(400).json({ error: kind.reason || 'unsupported source' });
   try {
     const info = await resolver.resolveUrl(url);
+    res.set('Cache-Control', 'no-store');
+    res.json(info);
+  } catch (err) {
+    res.status(err.code === 400 ? 400 : 502).json({
+      error: err.message,
+      hint: 'check tools/yt-dlp.exe (or VR_YTDLP) and network access'
+    });
+  }
+});
+
+// Discovery queue: flat playlist metadata only. No file is downloaded, and
+// these entries never join the canonical shelf or its achievements.
+app.get('/api/v1/discover', async (req, res) => {
+  const url = String(req.query.url || '');
+  if (!url) return res.status(400).json({ error: 'missing url parameter' });
+  try {
+    const info = await discovery.scan(url);
     res.set('Cache-Control', 'no-store');
     res.json(info);
   } catch (err) {

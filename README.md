@@ -26,6 +26,8 @@ npm run smoke   # boots a throwaway server and checks every endpoint
 | `VR_RESOLVE_TTL` | `20` | minutes to cache a resolved stream URL (signed links expire in hours) |
 | `VR_YTDLP_ARGS` | empty | extra args appended to every resolve call, e.g. `--cookies-from-browser chrome` |
 | `VR_RESOLVE_TIMEOUT` | `45` | seconds before a resolve attempt is abandoned |
+| `VR_DISCOVER_LIMIT` | `200` | max candidates returned by one discovery scan |
+| `VR_DISCOVER_TTL` | `30` | minutes to cache a playlist's metadata |
 
 ## youtube link playback
 
@@ -33,7 +35,9 @@ npm run smoke   # boots a throwaway server and checks every endpoint
 progressive mp4 stream URL (format 18 - video and audio combined, so the
 player's `<audio>` and muted `<video>` can share it). nothing is downloaded or
 added to the shelf. `GET /api/v1/resolve/status` reports whether the binary is
-available. only youtube URLs are accepted; everything else gets a 400.
+available. youtube, youtube music, soundcloud, jiosaavn and bandcamp links are
+accepted; spotify and apple music are rejected with a clear message because
+they have no direct extractor.
 
 the binary is gitignored (24 MB), so install it once:
 
@@ -50,6 +54,23 @@ signed stream URLs are bound to the requesting IP and expire in hours, so the
 player re-resolves every time rather than storing them. a 403/429 usually means
 the IP got soft-blocked - solve the challenge in a browser and retry with
 cookies. resolved metadata is cached for `VR_RESOLVE_TTL` minutes.
+
+## discovery queue + sandbox radio
+
+`GET /api/v1/discover?url=<playlist url>` runs yt-dlp with `--flat-playlist
+--skip-download --dump-single-json`. it returns only metadata (id, title,
+channel, duration, thumbnail, playable url) and never downloads audio. accepted
+inputs are youtube/youtube music playlists (or a single video), soundcloud sets,
+jiosaavn and bandcamp playlists, plus explicit `ytsearch5:query` /
+`ytmsearch5:query` station queries. results are capped at `VR_DISCOVER_LIMIT`
+and cached in memory for `VR_DISCOVER_TTL` minutes; concurrent identical scans
+share one in-flight job.
+
+the player's discover panel previews candidates and lets you keep a few in a
+separate local pool. sandbox radio shuffles that pool, resolves each entry on
+demand through `/api/v1/resolve`, and repeats forever. neither feature writes
+`vr_clean`, shelf stats or achievements - the 418 stays finite and fully
+offline. spotify/apple playlists get a plain error rather than a fake result.
 
 ## browser console
 

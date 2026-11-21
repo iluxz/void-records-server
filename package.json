@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node server.js",
     "smoke": "node scripts/smoke.js",
-    "check": "node --check server.js && node --check lib/catalog.js && node --check lib/lyrics.js && node --check lib/store.js && node --check lib/resolve.js && node --check public/vr-client.js && node --check scripts/smoke.js && node --check scripts/tunnel-url.js",
+    "check": "node --check server.js && node --check lib/catalog.js && node --check lib/lyrics.js && node --check lib/store.js && node --check lib/resolve.js && node --check lib/sources.js && node --check lib/discover.js && node --check public/vr-client.js && node --check scripts/smoke.js && node --check scripts/tunnel-url.js",
     "console:url": "node scripts/tunnel-url.js",
     "console:deploy": "node scripts/tunnel-url.js && wrangler pages deploy pages --project-name void-records-console",
     "deploy": "wrangler deploy",
