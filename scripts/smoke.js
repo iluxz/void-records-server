@@ -39,7 +39,7 @@ async function json(pathname, options) {
 
   const consolePage = await fetch(BASE + '/console');
   const consoleHtml = await consolePage.text();
-  check('console served', consolePage.status === 200 && /void-records :: console/.test(consoleHtml));
+  check('console served', consolePage.status === 200 && /void records :: console/.test(consoleHtml));
   check('console has request/response ui', consoleHtml.includes('id="send"') && consoleHtml.includes('id="out"') && consoleHtml.includes('id="player"'));
 
   const manifest = await json('/api/v1/manifest');
