@@ -2,4 +2,5 @@ node_modules/
 data/state.json
 data/state.json.tmp
 *.log
+data/server-startup.log
 .DS_Store
