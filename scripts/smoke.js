@@ -36,7 +36,7 @@ async function json(pathname, options) {
   if (!up) throw new Error('server did not start');
 
   const health = await json('/health');
-  check('health', health.body.ok && health.body.tracks === 432, 'tracks=' + health.body.tracks);
+  check('health', health.body.ok && health.body.tracks === 490, 'tracks=' + health.body.tracks);
 
   const consolePage = await fetch(BASE + '/console');
   const consoleHtml = await consolePage.text();
@@ -44,8 +44,8 @@ async function json(pathname, options) {
   check('console has request/response ui', consoleHtml.includes('id="send"') && consoleHtml.includes('id="out"') && consoleHtml.includes('id="player"'));
 
   const manifest = await json('/api/v1/manifest');
-  check('manifest 432 tracks', manifest.body.count === 432, 'count=' + manifest.body.count);
-  check('durations merged', manifest.body.timedCount === 432, 'timed=' + manifest.body.timedCount);
+  check('manifest 490 tracks', manifest.body.count === 490, 'count=' + manifest.body.count);
+  check('durations merged', manifest.body.timedCount === 490, 'timed=' + manifest.body.timedCount);
   check('urls encoded', manifest.body.tracks[0].url.startsWith('/audio/'));
 
   const one = await json('/api/v1/tracks/' + encodeURIComponent(manifest.body.tracks[0].file));
@@ -77,7 +77,7 @@ async function json(pathname, options) {
   check('lyrics offline empty is graceful', lyrics.status === 200 && lyrics.body.found === false);
 
   const lyricsIndex = await json('/api/v1/lyrics/index');
-  check('lyrics index', lyricsIndex.body.count === 0);
+  check('lyrics index', lyricsIndex.body.count > 0 && lyricsIndex.body.count === Object.keys(require('../data/lyrics.json')).length);
 
   const client = 'smoke-' + Date.now();
   const patched = await json('/api/v1/state/' + client, {
