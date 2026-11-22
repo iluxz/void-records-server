@@ -18,7 +18,7 @@ npm run smoke   # boots a throwaway server and checks every endpoint
 | `PORT` | `8787` | listen port |
 | `HOST` | `127.0.0.1` | set `0.0.0.0` only if another machine/projects on the LAN need it |
 | `VR_MEDIA_DIR` | `../void-records` | folder holding `tracks.js` and the audio files |
-| `VR_DURATIONS` | `data/durations.tsv` | 431-row `file<TAB>seconds` table |
+| `VR_DURATIONS` | `data/durations.tsv` | 432-row `file<TAB>seconds` table |
 | `VR_LYRICS` | `data/lyrics.json` | offline lyric dump result |
 | `VR_STATE` | `data/state.json` | shared settings/achievements store |
 | `VR_YTDLP` | `tools/yt-dlp.exe` (or PATH) | yt-dlp binary used by the link resolver |
@@ -69,7 +69,7 @@ share one in-flight job.
 the player's discover panel previews candidates and lets you keep a few in a
 separate local pool. sandbox radio shuffles that pool, resolves each entry on
 demand through `/api/v1/resolve`, and repeats forever. neither feature writes
-`vr_clean`, shelf stats or achievements - the 431 stays finite and fully
+`vr_clean`, shelf stats or achievements - the 432 stays finite and fully
 offline. spotify/apple playlists get a plain error rather than a fake result.
 
 ## browser console
@@ -112,7 +112,7 @@ use a named tunnel with a domain instead.
 |---|---|
 | `GET /` / `GET /console` | the browser console |
 | `GET /health` | status, track count, lyric count, uptime |
-| `GET /api/v1/manifest` | all 431 tracks with name, tags, duration, mime, url |
+| `GET /api/v1/manifest` | all 432 tracks with name, tags, duration, mime, url |
 | `GET /api/v1/tracks/:file` | one track |
 | `GET /audio/:file` | the actual file, with byte-range support + immutable cache |
 | `GET /api/v1/random?tag=&min=&max=&exclude=&n=&seed=` | filtered random picks, seed is optional/deterministic |
@@ -141,7 +141,7 @@ gotcha: an `https://` page cannot load audio from `http://127.0.0.1:8787` (mixed
 
 ## rules baked in
 
-- **never** calls LRCLIB or any external API. `data/lyrics.json` is populated offline from the dump; an empty source returns `{found:false}`, not a live search.
+- **never** calls LRCLIB or any external API at runtime. `data/lyrics.json` is built ahead of time by a one-off, rate-limited per-song lookup (see `scripts/build-lyrics.py`); an empty source returns `{found:false}`, not a live search.
 - audio filenames are stable, so files are cached as `immutable` and served with `Range` — seeking a 65-minute track does not re-download it.
 - state is written at most once per 1.5s burst, via atomic temp-file + rename.
 - the catalog and lyric index load once at startup. no per-request filesystem scanning.
@@ -149,4 +149,4 @@ gotcha: an `https://` page cannot load audio from `http://127.0.0.1:8787` (mixed
 
 ## status
 
-the offline lyric file is currently empty because the LRCLIB recompress died with `EOFError` on a truncated `.zst`. the lyrics route is live and tested; it just reports "not found" until the dump is finished and matched against the 431-row duration table.
+the 52.94 GiB LRCLIB sqlite dump is gone - it was never needed. `data/lyrics.json` is now built by searching LRCLIB once per shelf song, 1.5s apart, with strict title and duration guards. the lyrics route stays offline at runtime; unmatched songs simply report "not found".
