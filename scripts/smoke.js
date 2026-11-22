@@ -36,7 +36,7 @@ async function json(pathname, options) {
   if (!up) throw new Error('server did not start');
 
   const health = await json('/health');
-  check('health', health.body.ok && health.body.tracks === 418, 'tracks=' + health.body.tracks);
+  check('health', health.body.ok && health.body.tracks === 431, 'tracks=' + health.body.tracks);
 
   const consolePage = await fetch(BASE + '/console');
   const consoleHtml = await consolePage.text();
@@ -44,8 +44,8 @@ async function json(pathname, options) {
   check('console has request/response ui', consoleHtml.includes('id="send"') && consoleHtml.includes('id="out"') && consoleHtml.includes('id="player"'));
 
   const manifest = await json('/api/v1/manifest');
-  check('manifest 418 tracks', manifest.body.count === 418, 'count=' + manifest.body.count);
-  check('durations merged', manifest.body.timedCount === 418, 'timed=' + manifest.body.timedCount);
+  check('manifest 431 tracks', manifest.body.count === 431, 'count=' + manifest.body.count);
+  check('durations merged', manifest.body.timedCount === 431, 'timed=' + manifest.body.timedCount);
   check('urls encoded', manifest.body.tracks[0].url.startsWith('/audio/'));
 
   const one = await json('/api/v1/tracks/' + encodeURIComponent(manifest.body.tracks[0].file));
