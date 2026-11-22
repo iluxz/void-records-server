@@ -73,7 +73,8 @@ app.get('/health', (req, res) => {
     lyrics: lyrics.size,
     clients: Object.keys(store.all()).length,
     uptime: Math.round(process.uptime()),
-    mediaDir: MEDIA_DIR
+    mediaDir: MEDIA_DIR,
+    audioDir: path.join(MEDIA_DIR, 'tracks')
   });
 });
 
@@ -211,7 +212,7 @@ app.delete('/api/v1/state/:client', (req, res) => {
 });
 
 // express.static handles Range, ETag and Last-Modified for us.
-app.use('/audio', express.static(MEDIA_DIR, {
+app.use('/audio', express.static(path.join(MEDIA_DIR, 'tracks'), {
   acceptRanges: true,
   etag: true,
   lastModified: true,
@@ -233,6 +234,7 @@ app.use((err, req, res, next) => {
 const server = app.listen(PORT, HOST, () => {
   console.log('[void-records-server] ' + HOST + ':' + PORT);
   console.log('  media   ' + MEDIA_DIR);
+  console.log('  audio   ' + path.join(MEDIA_DIR, 'tracks'));
   console.log('  tracks  ' + catalog.count + ' (' + catalog.timedCount + ' with durations)');
   console.log('  lyrics  ' + lyrics.size + ' offline entries');
   console.log('  state   ' + STATE_FILE);
